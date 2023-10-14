@@ -1,0 +1,24 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+#Get timer list
+#GET https://localhost:7230/api/timers/list
+#Authorization: Bearer tokenkjdfkg
+
+#Login
+POST https://localhost:7009/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "user1@mail.com",
+    "password": "user1"
+}
+
+#Register
+# POST https://localhost:7230/api/auth/register
+# Content-Type: application/json
+
+# {
+#     "userName": "UserOne",
+#     "phone": "12345678",
+#     "email": "user1@mail.com",
+#     "password": "user1"
+# }

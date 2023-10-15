@@ -32,6 +32,23 @@
                     </ul>
                 </div>
                 <a id="datetime">Time</a>
+                @* <a href="api/timers/list">&#160Test</a> *@
+                <a>&#160&#160</a>
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @* <a class="text-warning text-uppercase badge bg-primary fs-5 border border-1 border-warning">@User.Identity.Name</a> *@
+                    @* <a>&nbsp;</a> *@
+                    @* <a href="/logout"><i class="fa fa-user"></i> Logout</a> *@
+                    @* <button type="button" class="btn btn-dark" id="user-logout">Logout</button> *@
+                }
+                else
+                {
+                    @* <a href="/login"><i class="fa fa-user"></i> Login</a> *@
+                    @* <a class="text-warning text-uppercase badge bg-primary fs-5 border border-1 border-warning" id="user-name"></a> *@
+                    @* <button type="button" class="btn btn-dark btn-link" id="user-login">Login</button> *@
+                }
+                <a class="text-warning text-uppercase badge bg-primary fs-6 border border-1 border-warning" id="user-name"></a>
+                <button type="button" class="btn btn-dark btn-link" id="user-login">Login</button>
             </div>
         </nav>
     </header>
@@ -51,11 +68,12 @@
     <link rel="stylesheet" href="~/lib/datetimepicker/jquery.datetimepicker.css" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    @* <script src="~/js/site.js" asp-append-version="true"></script> *@
     <script src="~/lib/moment/moment-with-locales.js"></script>
     <script src="~/lib/sweetalert/package/dist/sweetalert2.all.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js" integrity="sha512-AIOTidJAcHBH2G/oZv9viEGXRqDNmfdPVPYOYKGy3fti0xIplnlgMHUGfuNRzC6FkzIo0iIxgFnr9RikFxK+sw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+    @* <script src="~/js/site.js"></script> *@
+    @* <script src="~/js/LoginRegister.js"></script> *@
     <script>
         var datetime = null,
             date = null;
@@ -71,6 +89,7 @@
             setInterval(update, 1000);
         });
     </script>
+    <script src="~/js/site.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

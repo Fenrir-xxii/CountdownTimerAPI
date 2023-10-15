@@ -15,6 +15,16 @@ IConfigurationRoot configuration = new ConfigurationBuilder()
 
 var builder = WebApplication.CreateBuilder(args);
 
+var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: myAllowSpecificOrigins,
+        policy =>
+        {
+            policy.WithOrigins("https://localhost.com").AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        });
+});
+
 builder.Services.Configure<JwtConfig>(configuration.GetSection("JwtConfig"));
 
 builder.Services.AddControllers();
@@ -66,6 +76,15 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         RequireExpirationTime = true, //false??
     };
+    jwt.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            // Put a breakpoint here
+            System.Console.WriteLine(context.Exception);
+            return Task.CompletedTask;
+        },
+    };
 });
 
 builder.Services.AddMvc();
@@ -79,6 +98,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors(myAllowSpecificOrigins);
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

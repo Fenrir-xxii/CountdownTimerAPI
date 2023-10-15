@@ -9,6 +9,7 @@ using WebApplication7_CountdownTimerAPI.Models.Configuration;
 using WebApplication7_CountdownTimerAPI.Models.Requests;
 using WebApplication7_CountdownTimerAPI.Models.Responses;
 using WebApplication7_CountdownTimerAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApplication7_CountdownTimerAPI.Controllers;
 
@@ -20,11 +21,13 @@ public class AuthController : ControllerBase
     private readonly ILogger<TimeHistoryController> _logger;
     private readonly UserManager<User> _userManager;
     private readonly JwtConfig _jwtConfig;
-    public AuthController(ILogger<TimeHistoryController> logger, UserManager<User> userManager, IOptionsMonitor<JwtConfig> options)
+    private readonly SignInManager<User> _signInManager;
+    public AuthController(ILogger<TimeHistoryController> logger, UserManager<User> userManager, IOptionsMonitor<JwtConfig> options, SignInManager<User> signInManager)
     {
         _logger = logger;
         _userManager = userManager;
         _jwtConfig = options.CurrentValue;
+        _signInManager = signInManager;
     }
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserRegistrationRequest register)
@@ -93,15 +96,18 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserLoginRequest user)
     {
-        if (!ModelState.IsValid) return BadRequest(new AuthResponse
+        if (!ModelState.IsValid)
         {
-            Success = false,
-            Error = "Bad request",
-            Token = String.Empty
-        });
+            return BadRequest(new AuthResponse
+            {
+                Success = false,
+                Error = "Bad request",
+                Token = String.Empty
+            });
+        }
 
         var existingUser = await _userManager.FindByEmailAsync(user.Email);
-        if (existingUser != null)
+        if (existingUser == null)
         {
             return BadRequest(new AuthResponse
             {
@@ -121,6 +127,25 @@ public class AuthController : ControllerBase
                 Token = String.Empty
             });
         }
+
+        //var signInResult = await _signInManager.PasswordSignInAsync(existingUser, user.Password, true, false);
+        //if (!signInResult.Succeeded)
+        //{
+        //    return BadRequest(new AuthResponse
+        //    {
+        //        Success = false,
+        //        Error = "Sign in failed",
+        //        Token = String.Empty
+        //    });
+        //}
+        //if (User.Identity.IsAuthenticated)
+        //{
+        //    Console.WriteLine("AUTH: IsAuthenticated");
+        //}
+        //else
+        //{
+        //    Console.WriteLine("AUTH: Is not Authenticated");
+        //}
         var jwtToken = GenerateJwtToken(existingUser);
         return Ok(new AuthResponse
         {
@@ -128,5 +153,24 @@ public class AuthController : ControllerBase
             Error = String.Empty,
             Token = jwtToken
         });
+    }
+    [Authorize]
+    [HttpGet("check", Name = "GetTokenCheck")]
+    public async Task<object> GetTokenCheck()
+    {
+        var newUser = new UserData { Success = false };
+        string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            newUser = new UserData
+            {
+                UserName = userId,
+                //Phone = _user.PhoneNumber,
+                //Email = _user.Email,
+                Success = true
+            };
+        }
+        return newUser;
     }
 }

@@ -10,4 +10,6 @@ public class SiteDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
 
     }
+    public virtual DbSet<CountdownRecord> CountdownRecords { get; set; } = null!;
+    public virtual DbSet<FavoriteCountdown> FavoriteCountdowns { get; set; } = null!;
 }

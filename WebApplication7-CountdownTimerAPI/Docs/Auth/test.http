@@ -1,10 +1,10 @@
 # For more info on HTTP files go to https://aka.ms/vs/httpfile
 #Get timer list
-#GET https://localhost:7230/api/timers/list
+#GET https://localhost:5062/api/timers/list
 #Authorization: Bearer tokenkjdfkg
 
 #Login
-POST https://localhost:7009/api/auth/login
+POST https://localhost:5062/api/auth/login
 Content-Type: application/json
 
 {
@@ -13,7 +13,7 @@ Content-Type: application/json
 }
 
 #Register
-# POST https://localhost:7230/api/auth/register
+# POST https://localhost:5062/api/auth/register
 # Content-Type: application/json
 
 # {

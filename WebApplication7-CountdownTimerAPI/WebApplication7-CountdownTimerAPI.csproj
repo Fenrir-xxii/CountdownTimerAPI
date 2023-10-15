@@ -25,9 +25,7 @@
 
   <ItemGroup>
     <Folder Include="Docs\Auth\" />
-    <Folder Include="Models\" />
     <Folder Include="Views\Auth\" />
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

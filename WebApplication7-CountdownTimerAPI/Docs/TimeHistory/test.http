@@ -1,0 +1,15 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+
+POST https://localhost:5062/api/timers/add-countdown
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6IjIiLCJlbWFpbCI6InVzZXIyQG1haWwuY29tIiwic3ViIjoidXNlcjJAbWFpbC5jb20iLCJqdGkiOiJiMjVlNGE2YS00MWQxLTRjMDAtYmVmNy03OTUwN2YyMDJjNWYiLCJuYmYiOjE2OTczOTk5MjIsImV4cCI6MTY5ODAwNDcyMiwiaWF0IjoxNjk3Mzk5OTIyfQ.ZxEYcMRhEpqjMc2bUbmGYQEqjETRNb5At8R4N3BxFHA
+ 
+{
+    "startTime": "2023-10-15T20:56:48.820Z",
+    "endTime": "2023-10-15T20:57:48.820Z",
+    "durationPlanned": "4s",
+    "durationPerformed: "4s"
+}
+
+""eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6IjIiLCJlbWFpbCI6InVzZXIyQG1haWwuY29tIiwic3ViIjoidXNlcjJAbWFpbC5jb20iLCJqdGkiOiJiMjVlNGE2YS00MWQxLTRjMDAtYmVmNy03OTUwN2YyMDJjNWYiLCJuYmYiOjE2OTczOTk5MjIsImV4cCI6MTY5ODAwNDcyMiwiaWF0IjoxNjk3Mzk5OTIyfQ.ZxEYcMRhEpqjMc2bUbmGYQEqjETRNb5At8R4N3BxFHA""

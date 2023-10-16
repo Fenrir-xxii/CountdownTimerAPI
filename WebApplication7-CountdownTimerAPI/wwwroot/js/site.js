@@ -1,8 +1,6 @@
 ﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
-//const uri = 'api/timers/list';
-//let countdownsArr = [];
 const token = JSON.parse(localStorage.getItem("token"));
 console.log("token", token);
 var eventDuration = 0;
@@ -12,29 +10,20 @@ var audio = document.getElementById("track");
 var countdownList = [];
 var favList = [];
 let selectedDateTime;
-/*window.onload = loadData();*/
 
-var countdownModel = { startTime: "--:--", eventTime: "--:--", durationPlan: "0s", durationPerformed: "0s" };
-var favModel = { eventTime: "--:--", title: "" };
+var countdownModel = { startTime: "--:--", endTime: "--:--", durationPlanned: "0s", durationPerformed: "0s" };
+var favModel = { time: "--:--", title: "" };
 const table = document.getElementById('record-table-body');
-
-//fillTable();
-//FillFavorites();
-
-
-
 
 checkAuth();
 getRecordItems();
 getFavoriteItems();
 
-//var countdownModel = { startTime: "--:--", eventTime: "--:--", durationPlan: "0s", durationPerformed: "0s" };
-//var favModel = { time: "--:--", title: "" };
 function getRecordItems() {
     fetch('api/timers/records', {
         headers: { Authorization: `Bearer ${token}` }
     })
-        .then(response => response.json())
+        .then(response =>  response.json())
         .then(data => _displayRecordItems(data))
         .catch(error => console.error('Unable to get record items.', error));
 }
@@ -47,21 +36,11 @@ function getFavoriteItems() {
         .catch(error => console.error('Unable to get fav items.', error));
 }
 function _displayRecordItems(data) {
-    const tBody = document.getElementById('record-table-body');
-    tBody.innerHTML = '';
+    //console.log("display REC data", data);
+    table.innerHTML = '';
 
     data.forEach(item => {
-
-        let row = tBody.insertRow();
-
-        let startTime = row.insertCell(0);
-        startTime.innerHTML = item.startTime;
-        let eventTime = row.insertCell(1);
-        eventTime.innerHTML = item.endTime;
-        let durationPlan = row.insertCell(2);
-        durationPlan.innerHTML = item.durationPlanned;
-        let durationPerformed = row.insertCell(3);
-        durationPerformed.innerHTML = item.durationPerformed;
+        insertTableRow(item);
     });
     console.log("display record data", data);
     countdownList = data;
@@ -71,40 +50,131 @@ function _displayFavoriteItems(data) {
     ul.innerHTML = '';
 
     data.forEach(fav => {
-        var button = document.createElement("button");
-        button.textContent = fav.time + ' "' + fav.title + '"';
-        button.classList.add("fav-btn-list");
-        var li = document.createElement("li");
-        li.appendChild(button);
-        ul.appendChild(li);
-        button.addEventListener('click', () => {
-            var favTime = moment(fav.time, "HH:mm");
-            var formatted = setDateTime(favTime);
-            console.log("favTime", favTime);
-            jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
-            selectedDateTime = formatted;
-            $('#selected-date-time').text(formatted);
-            var dt = moment(formatted, "DD.MM.YYYY HH:mm");
-            var time = dt.format('HH:mm');
-            console.log("time", time);
-            favModel.time = time;
-        });
-        button.addEventListener('dblclick', () => {
-            var favTime = moment(fav.time, "HH:mm");
-            var formatted = setDateTime(favTime);
-            console.log("favTime", favTime);
-            jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
-            selectedDateTime = formatted;
-            $('#selected-date-time').text(formatted);
-            var dt = moment(formatted, "DD.MM.YYYY HH:mm");
-            var time = dt.format('HH:mm');
-            console.log("time", time);
-            favModel.time = time;
-            $('#start-btn').click();
-        });
+        //var button = document.createElement("button");
+        //button.textContent = fav.time + ' "' + fav.title + '"';
+        //button.classList.add("fav-btn-list");
+        //var li = document.createElement("li");
+        //li.appendChild(button);
+        //ul.appendChild(li);
+        //button.addEventListener('click', () => {
+        //    var favTime = moment(fav.time, "HH:mm");
+        //    var formatted = setDateTime(favTime);
+        //    console.log("favTime", favTime);
+        //    jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
+        //    selectedDateTime = formatted;
+        //    $('#selected-date-time').text(formatted);
+        //    var dt = moment(formatted, "DD.MM.YYYY HH:mm");
+        //    var time = dt.format('HH:mm');
+        //    console.log("time", time);
+        //    favModel.time = time;
+        //});
+        //button.addEventListener('dblclick', () => {
+        //    var favTime = moment(fav.time, "HH:mm");
+        //    var formatted = setDateTime(favTime);
+        //    console.log("favTime", favTime);
+        //    jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
+        //    selectedDateTime = formatted;
+        //    $('#selected-date-time').text(formatted);
+        //    var dt = moment(formatted, "DD.MM.YYYY HH:mm");
+        //    var time = dt.format('HH:mm');
+        //    console.log("time", time);
+        //    favModel.time = time;
+        //    $('#start-btn').click();
+        //});
+        insertListItem(fav);
     });
     console.log("display fav data", data);
     favList = data;
+}
+function insertTableRow(record) {
+    let row = table.insertRow();
+
+    let startTime = row.insertCell(0);
+    startTime.innerHTML = record.startTime;
+    let endTime = row.insertCell(1);
+    endTime.innerHTML = record.endTime;
+    let durationPlanned = row.insertCell(2);
+    durationPlanned.innerHTML = record.durationPlanned;
+    let durationPerformed = row.insertCell(3);
+    durationPerformed.innerHTML = record.durationPerformed;
+}
+function insertListItem(item) {
+    const ul = document.getElementById('fav-list');
+    var button = document.createElement("button");
+    button.textContent = item.time + ' "' + item.title + '"';
+    button.classList.add("fav-btn-list");
+    var delButton = document.createElement("button");
+    delButton.classList.add("del-button");
+    delButton.setAttribute("data-id", item.id);
+    var li = document.createElement("li");
+    li.appendChild(button);
+    li.appendChild(delButton);
+    ul.appendChild(li);
+    button.addEventListener('click', () => {
+        var favTime = moment(item.time, "HH:mm");
+        var formatted = setDateTime(favTime);
+        console.log("favTime", favTime);
+        jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
+        selectedDateTime = formatted;
+        $('#selected-date-time').text(formatted);
+        var dt = moment(formatted, "DD.MM.YYYY HH:mm");
+        var time = dt.format('HH:mm');
+        console.log("time", time);
+        favModel.time = time;
+    });
+    button.addEventListener('dblclick', () => {
+        var favTime = moment(item.time, "HH:mm");
+        var formatted = setDateTime(favTime);
+        console.log("favTime", favTime);
+        jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
+        selectedDateTime = formatted;
+        $('#selected-date-time').text(formatted);
+        var dt = moment(formatted, "DD.MM.YYYY HH:mm");
+        var time = dt.format('HH:mm');
+        console.log("time", time);
+        favModel.time = time;
+        $('#start-btn').click();
+    });
+    delButton.addEventListener('click', () => {
+        /*console.log("DELETE");*/
+        var id = event.target.getAttribute("data-id");
+        console.log("DELETE #", id);
+        //Swal.fire(`test + ${id}`);
+        Swal.fire({
+            title: 'Do you want to delete timer?',
+            showDenyButton: true,
+            showCancelButton: false,
+            confirmButtonText: 'Delete',
+            denyButtonText: `Keep`,
+        }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+                fetch(`api/timers/del-fav/${id}`, {
+                    method: "post",
+                    headers: new Headers({
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': "application/json"
+                    }),
+                    mode: 'cors'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            getFavoriteItems();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Something went wrong!',
+                            })
+                        }
+                    })
+            }
+        })
+
+
+        
+    });
 }
 
 $('#start-btn').on("click", function () {
@@ -128,8 +198,8 @@ $('#start-btn').on("click", function () {
     eventDuration = moment.duration(seconds, 'seconds');
 
     countdownModel.startTime = currentTime.format('YYYY-MM-DD HH:mm:ss');
-    countdownModel.eventTime = endTime.format('YYYY-MM-DD HH:mm:ss');
-    countdownModel.durationPlan = eventDuration.days() + ' d : ' + eventDuration.hours() + ' h : ' + eventDuration.minutes() + ' m : ' + eventDuration.seconds() + ' s';
+    countdownModel.endTime = endTime.format('YYYY-MM-DD HH:mm:ss');
+    countdownModel.durationPlanned = eventDuration.days() + ' d : ' + eventDuration.hours() + ' h : ' + eventDuration.minutes() + ' m : ' + eventDuration.seconds() + ' s';
     console.log("countdownModel", countdownModel);
 
     intervalId = window.setInterval(function () {
@@ -140,7 +210,7 @@ $('#start-btn').on("click", function () {
             console.log("cleared from func timeStart");
             audio.play();
             $('#timer').text('--:--');
-            countdownModel.durationPerformed = countdownModel.durationPlan;
+            countdownModel.durationPerformed = countdownModel.durationPlanned;
             addCountdownToList();
             var millisecondsToWait = 1200;  // length of audio
             setTimeout(function () {
@@ -161,17 +231,16 @@ $('#stop-btn').on("click", function () {
     let abortedDuration = eventDuration.days() + ' d : ' + eventDuration.hours() + ' h : ' + eventDuration.minutes() + ' m : ' + eventDuration.seconds() + ' s';
     countdownModel.durationPerformed = abortedDuration;
     addCountdownToList();
+    /*insertTableRow(countdownModel);*/
     eventDuration = 0;
     $('#timer').text("--:--");
-    table.innerHTML = "";
-    //loadData();
-    //fillTable();
 });
 
 $('#favorite-btn').on("click", function () {
     if (selectedDateTime !== undefined) {
         //check if time unique
-        if (favList.filter(f => f.eventTime == favModel.eventTime).length == 0) {
+        console.log("FavList", favList);
+        if (favList.filter(f => f.time == favModel.time).length == 0) {
             //add title
             Swal.fire({
                 title: "Title",
@@ -190,6 +259,11 @@ $('#favorite-btn').on("click", function () {
         }
         else {
             console.log("NOT unique time");
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Such exact time already exists',
+            })
         }
     }
 });
@@ -206,14 +280,18 @@ function addCountdownToList() {
             mode: 'cors',
             body: JSON.stringify({
                 StartTime: countdownModel.startTime,
-                EndTime: countdownModel.eventTime,
-                DurationPlanned: countdownModel.durationPlan,
+                EndTime: countdownModel.endTime,
+                DurationPlanned: countdownModel.durationPlanned,
                 DurationPerformed: countdownModel.durationPerformed
             })
         })
             .then(response => response.json())
             .then(data => {
                 console.log("data", data);
+                if (data.success) {
+                    //insertTableRow(countdownModel);
+                    getRecordItems();
+                }
             });
     } catch (error) {
         console.error(error);
@@ -223,6 +301,36 @@ function addCountdownToList() {
 
     /* saveData();*/
     //fetch
+}
+function saveFavorite() {
+    // add to list
+    favList.push(favModel);
+    try {
+        fetch('api/timers/add-favorite', {
+            method: "post",
+            headers: new Headers({
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': "application/json"
+            }),
+            mode: 'cors',
+            body: JSON.stringify({
+                Title: favModel.title,
+                Time: favModel.time
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("data", data);
+                if (data.success) {
+                    insertListItem(favModel);
+                    favModel = { time: "--:--", title: "" };
+                }
+            });
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+    
 }
 jQuery('#datetimepicker').datetimepicker({
     format: 'd.m.Y H:i',
@@ -239,7 +347,7 @@ jQuery('#datetimepicker').datetimepicker({
         var dt = moment($input.val(), "DD.MM.YYYY HH:mm");
         var time = dt.format('HH:mm');
         console.log("time", time);
-        favModel.eventTime = time;
+        favModel.time = time;
     }
 });
 

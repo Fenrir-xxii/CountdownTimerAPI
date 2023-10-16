@@ -48,14 +48,15 @@ public class TimeHistoryController : ControllerBase
         }
         return null;
     }
-    private async Task<List<CountdownRecord>> GetRecords()
+    private async Task<List<CountdownRecord>> GetRecords(int count)
     {
         var user = await GetCurrentUser();
         if(user == null)
         {
             return new List<CountdownRecord>();
         }
-        return await _context.CountdownRecords.Where(x => x.User.Id == user.Id).ToListAsync();
+
+        return await _context.CountdownRecords.Where(x => x.User.Id == user.Id).OrderByDescending(x => x.Id).Take(count).ToListAsync();
     }
     private async Task<List<FavoriteCountdown>> GetFavoriteCountdowns()
     {
@@ -70,8 +71,7 @@ public class TimeHistoryController : ControllerBase
     [HttpGet("records", Name = "GetTimerList")]
     public async Task<List<CountdownRecord>> GetList()
     {
-        return await GetRecords();
-
+        return await GetRecords(5);
     }
     [HttpGet("fav", Name = "GetFavoriteList")]
     public async Task<List<FavoriteCountdown>> GetFavoriteList()
@@ -91,6 +91,14 @@ public class TimeHistoryController : ControllerBase
             });
         }
         var user = await GetCurrentUser();
+        if(user == null)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "User not found"
+            });
+        }
         var countdown = new CountdownRecord
         {
             StartTime = DateTime.Parse(request.StartTime),
@@ -109,11 +117,54 @@ public class TimeHistoryController : ControllerBase
             Error = string.Empty
         });
     }
-    //[HttpGet("item/{id}", Name = "GetTimer")]
-    //public async Task<object> GetTimer(int id)
-    //{
-    //    return _history.FirstOrDefault();
-    //}
+    [HttpPost("add-favorite")]
+    public async Task<IActionResult> AddFavoriteCountdown([FromBody] AddFavoriteCountdownRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "Bad request"
+            });
+        }
+        var user = await GetCurrentUser();
+        if (user == null)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "User not found"
+            });
+        }
+        var favorite = new FavoriteCountdown
+        {
+            Title = request.Title,
+            Time = request.Time,
+            User = user
+        };
+
+        _context.Add(favorite);
+        _context.SaveChanges();
+
+        return Ok(new AddCountdownResponse
+        {
+            Success = true,
+            Error = string.Empty
+        });
+    }
+    [HttpPost("del-fav/{id}")]
+    public async Task<IActionResult> DeleteFavorite(int id)
+    {
+        var favorite = await _context.FavoriteCountdowns.FirstOrDefaultAsync(x => x.Id == id);
+        if(favorite == null)
+        {
+            return Ok(new {Success = false});
+        }
+        _context.Remove(favorite);
+        _context.SaveChanges();
+        return Ok(new { Success = true });
+    }
     //[HttpGet("authcheck", Name = "GetTokenCheck")]
     //public async Task<object> GetTokenCheck()
     //{

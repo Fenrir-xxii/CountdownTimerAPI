@@ -67,6 +67,15 @@ public class TimeHistoryController : ControllerBase
         }
         return await _context.FavoriteCountdowns.Where(x => x.User.Id == user.Id).ToListAsync();
     }
+    private async Task<List<CalendarEvent>> GetCalendarEvents()
+    {
+        var user = await GetCurrentUser();
+        if (user == null)
+        {
+            return new List<CalendarEvent>();
+        }
+        return await _context.CalendarEvents.Where(x => x.User.Id == user.Id).ToListAsync();
+    }
 
     [HttpGet("records", Name = "GetTimerList")]
     public async Task<List<CountdownRecord>> GetList()
@@ -77,6 +86,12 @@ public class TimeHistoryController : ControllerBase
     public async Task<List<FavoriteCountdown>> GetFavoriteList()
     {
         return await GetFavoriteCountdowns();
+
+    }
+    [HttpGet("events", Name = "GetEventList")]
+    public async Task<List<CalendarEvent>> GetCalendarEventList()
+    {
+        return await GetCalendarEvents();
 
     }
     [HttpPost("add-countdown")]
@@ -164,6 +179,42 @@ public class TimeHistoryController : ControllerBase
         _context.Remove(favorite);
         _context.SaveChanges();
         return Ok(new { Success = true });
+    }
+    [HttpPost("add-event")]
+    public async Task<IActionResult> AddCalendartEvent([FromBody] AddCalendarEventRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "Bad request"
+            });
+        }
+        var user = await GetCurrentUser();
+        if (user == null)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "User not found"
+            });
+        }
+        var calendarEvent = new CalendarEvent
+        {
+            Title = request.Title,
+            EventDate = DateTime.Parse(request.EventDate),
+            User = user
+        };
+
+        _context.Add(calendarEvent);
+        _context.SaveChanges();
+
+        return Ok(new AddCountdownResponse
+        {
+            Success = true,
+            Error = string.Empty
+        });
     }
     //[HttpGet("authcheck", Name = "GetTokenCheck")]
     //public async Task<object> GetTokenCheck()

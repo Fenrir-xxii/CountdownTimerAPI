@@ -4,20 +4,24 @@
 const token = JSON.parse(localStorage.getItem("token"));
 console.log("token", token);
 var eventDuration = 0;
+var initEventDuration = 0;
 var interval = 1000;
 var intervalId;     // variable to clearInterval()
 var audio = document.getElementById("track");
 var countdownList = [];
 var favList = [];
+var eventList = [];
 let selectedDateTime;
 
 var countdownModel = { startTime: "--:--", endTime: "--:--", durationPlanned: "0s", durationPerformed: "0s" };
 var favModel = { time: "--:--", title: "" };
 const table = document.getElementById('record-table-body');
+const eventTable = document.getElementById('events-table-body');
 
 checkAuth();
 getRecordItems();
 getFavoriteItems();
+getCalendarEventsItems();
 
 function getRecordItems() {
     fetch('api/timers/records', {
@@ -35,6 +39,14 @@ function getFavoriteItems() {
         .then(data => _displayFavoriteItems(data))
         .catch(error => console.error('Unable to get fav items.', error));
 }
+function getCalendarEventsItems() {
+    fetch('api/timers/events', {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+        .then(response => response.json())
+        .then(data => _displayCalendarEventsItems(data))
+        .catch(error => console.error('Unable to get events items.', error));
+}
 function _displayRecordItems(data) {
     //console.log("display REC data", data);
     table.innerHTML = '';
@@ -43,48 +55,26 @@ function _displayRecordItems(data) {
         insertTableRow(item);
     });
     console.log("display record data", data);
-    countdownList = data;
+    eventList = data;
 }
 function _displayFavoriteItems(data) {
     const ul = document.getElementById('fav-list');
     ul.innerHTML = '';
 
     data.forEach(fav => {
-        //var button = document.createElement("button");
-        //button.textContent = fav.time + ' "' + fav.title + '"';
-        //button.classList.add("fav-btn-list");
-        //var li = document.createElement("li");
-        //li.appendChild(button);
-        //ul.appendChild(li);
-        //button.addEventListener('click', () => {
-        //    var favTime = moment(fav.time, "HH:mm");
-        //    var formatted = setDateTime(favTime);
-        //    console.log("favTime", favTime);
-        //    jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
-        //    selectedDateTime = formatted;
-        //    $('#selected-date-time').text(formatted);
-        //    var dt = moment(formatted, "DD.MM.YYYY HH:mm");
-        //    var time = dt.format('HH:mm');
-        //    console.log("time", time);
-        //    favModel.time = time;
-        //});
-        //button.addEventListener('dblclick', () => {
-        //    var favTime = moment(fav.time, "HH:mm");
-        //    var formatted = setDateTime(favTime);
-        //    console.log("favTime", favTime);
-        //    jQuery('#datetimepicker').datetimepicker('setOptions', { value: formatted });
-        //    selectedDateTime = formatted;
-        //    $('#selected-date-time').text(formatted);
-        //    var dt = moment(formatted, "DD.MM.YYYY HH:mm");
-        //    var time = dt.format('HH:mm');
-        //    console.log("time", time);
-        //    favModel.time = time;
-        //    $('#start-btn').click();
-        //});
         insertListItem(fav);
     });
     console.log("display fav data", data);
     favList = data;
+}
+function _displayCalendarEventsItems(data) {
+    eventTable.innerHTML = '';
+
+    data.forEach(item => {
+        insertEventTableRow(item);
+    });
+    console.log("display event data", data);
+    countdownList = data;
 }
 function insertTableRow(record) {
     let row = table.insertRow();
@@ -97,6 +87,16 @@ function insertTableRow(record) {
     durationPlanned.innerHTML = record.durationPlanned;
     let durationPerformed = row.insertCell(3);
     durationPerformed.innerHTML = record.durationPerformed;
+}
+function insertEventTableRow(record) {
+    let row = eventTable.insertRow();
+
+    let title = row.insertCell(0);
+    title.innerHTML = record.title;
+    let eventDate = row.insertCell(1);
+    eventDate.innerHTML = record.eventDate;
+    let daysToCome = row.insertCell(2);
+    daysToCome.innerHTML = getDaysToEvent(record.eventDate); 
 }
 function insertListItem(item) {
     const ul = document.getElementById('fav-list');
@@ -176,6 +176,10 @@ function insertListItem(item) {
         
     });
 }
+function getDaysToEvent(date) {
+    //TODO
+    return -100;
+}
 
 $('#start-btn').on("click", function () {
     clearInterval(intervalId);
@@ -196,6 +200,7 @@ $('#start-btn').on("click", function () {
     var seconds = timerDuration.asSeconds();
 
     eventDuration = moment.duration(seconds, 'seconds');
+    initEventDuration = moment.duration(seconds, 'seconds');
 
     countdownModel.startTime = currentTime.format('YYYY-MM-DD HH:mm:ss');
     countdownModel.endTime = endTime.format('YYYY-MM-DD HH:mm:ss');
@@ -228,7 +233,9 @@ $('#start-btn').on("click", function () {
 $('#stop-btn').on("click", function () {
     clearInterval(intervalId);
     audio.play();
-    let abortedDuration = eventDuration.days() + ' d : ' + eventDuration.hours() + ' h : ' + eventDuration.minutes() + ' m : ' + eventDuration.seconds() + ' s';
+    let aborted = moment.duration(initEventDuration - eventDuration);
+    console.log("aborted", aborted);
+    let abortedDuration = aborted.days() + ' d : ' + aborted.hours() + ' h : ' + aborted.minutes() + ' m : ' + aborted.seconds() + ' s';
     countdownModel.durationPerformed = abortedDuration;
     addCountdownToList();
     /*insertTableRow(countdownModel);*/
@@ -267,6 +274,63 @@ $('#favorite-btn').on("click", function () {
         }
     }
 });
+$('#calendar-event-btn').on("click", function () {
+    console.log("event button click");
+    let datepicker;
+
+    Swal.fire({
+        title: 'Please enter event date',
+        input: 'text',
+        //html: `<input type="text" id="title" class="swal2-input" placeholder="Title">
+        //       <input type="text" id="datepicker" value="${new Date().toISOString()}">`,
+        inputValue: new Date().toISOString(),
+        stopKeydownPropagation: false,
+        preConfirm: () => {
+            if (datepicker.getDate() < new Date(new Date().setHours(0, 0, 0, 0))) {
+                Swal.showValidationMessage(`The event date can't be in the past`);
+            }
+            return datepicker.getDate()
+        },
+        didOpen: () => {
+            datepicker = new Pikaday({ field: Swal.getInput() });
+            //datepicker = new Pikaday({ field: Swal.getPopup().querySelector('#datepicker').value }); ;
+            setTimeout(() => datepicker.show(), 400); // show calendar after showing animation
+        },
+        didClose: () => {
+            datepicker.destroy();
+        },
+    }).then((result) => {
+        console.log(result.value);
+
+        // 1 check if date is unique eventList
+        // 2 if unique => new Swal with asking title for event
+        // 3 if title ok => fetch
+        if (eventList.filter(f => f.eventDate == favModel.time).length == 0) {
+
+        }
+
+        //fetch('api/timers/add-event', {
+        //    method: "post",
+        //    headers: new Headers({
+        //        'Authorization': `Bearer ${token}`,
+        //        'Content-Type': "application/json"
+        //    }),
+        //    mode: 'cors',
+        //    body: JSON.stringify({
+        //        Title: favModel.title,
+        //        EventDate: result.value
+        //    })
+        //})
+        //    .then(response => response.json())
+        //    .then(data => {
+        //        console.log("data", data);
+        //        if (data.success) {
+        //            //insertListItem(favModel);
+        //            //favModel = { time: "--:--", title: "" };
+        //        }
+        //    });
+    })
+})
 
 function addCountdownToList() {
     countdownList.push(countdownModel);
@@ -290,6 +354,7 @@ function addCountdownToList() {
                 console.log("data", data);
                 if (data.success) {
                     //insertTableRow(countdownModel);
+                    console.log("addCountdownSuccess");
                     getRecordItems();
                 }
             });

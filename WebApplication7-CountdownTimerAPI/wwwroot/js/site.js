@@ -15,6 +15,7 @@ let selectedDateTime;
 
 var countdownModel = { startTime: "--:--", endTime: "--:--", durationPlanned: "0s", durationPerformed: "0s" };
 var favModel = { time: "--:--", title: "" };
+var eventModel = { eventDate: "--:--", title: "" };
 const table = document.getElementById('record-table-body');
 const eventTable = document.getElementById('events-table-body');
 
@@ -94,7 +95,10 @@ function insertEventTableRow(record) {
     let title = row.insertCell(0);
     title.innerHTML = record.title;
     let eventDate = row.insertCell(1);
-    eventDate.innerHTML = record.eventDate;
+    //let evDate = Date.parse(record.eventDate);
+    let evDate = new Date(record.eventDate);
+    console.log("evDate", evDate);
+    eventDate.innerHTML = evDate.toLocaleDateString('uk-UA');
     let daysToCome = row.insertCell(2);
     daysToCome.innerHTML = getDaysToEvent(record.eventDate); 
 }
@@ -178,7 +182,14 @@ function insertListItem(item) {
 }
 function getDaysToEvent(date) {
     //TODO
-    return -100;
+    const today = new Date();
+    const eventDay = new Date(date);
+    const diffTime = Math.abs(eventDay - today);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    console.log(diffTime + " milliseconds");
+    console.log(diffDays + " days");
+
+    return diffDays;
 }
 
 $('#start-btn').on("click", function () {
@@ -301,13 +312,20 @@ $('#calendar-event-btn').on("click", function () {
         },
     }).then((result) => {
         console.log(result.value);
-
-        // 1 check if date is unique eventList
-        // 2 if unique => new Swal with asking title for event
-        // 3 if title ok => fetch
-        if (eventList.filter(f => f.eventDate == favModel.time).length == 0) {
-
-        }
+        eventModel.eventDate = result.value;
+        Swal.fire({
+            title: "Title",
+            input: 'text',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Save',
+            confirmButtonColor: '#3c4cc8'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                eventModel.title = result.value;
+                saveCalendarEvent();
+            }
+        })
 
         //fetch('api/timers/add-event', {
         //    method: "post",
@@ -331,6 +349,21 @@ $('#calendar-event-btn').on("click", function () {
         //    });
     })
 })
+$('#show-events-btn').on("click", function () {
+    var display = $('#event-container').css("display");
+    console.log("display now", display);
+    
+    if (display == "none") {
+        $('#event-container').css("display", "block");
+        $('#show-events-btn').html("Hide");
+        console.log("display block");
+    } else {
+        $('#event-container').css("display", "none");
+        $('#show-events-btn').html("Show");
+        console.log("display none");
+    }
+})
+
 
 function addCountdownToList() {
     countdownList.push(countdownModel);
@@ -396,6 +429,37 @@ function saveFavorite() {
         return false;
     }
     
+}
+function saveCalendarEvent() {
+    // add to list
+    eventList.push(eventModel);
+    try {
+        fetch('api/timers/add-event', {
+            method: "post",
+            headers: new Headers({
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': "application/json"
+            }),
+            mode: 'cors',
+            body: JSON.stringify({
+                Title: eventModel.title,
+                EventDate: eventModel.eventDate
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("data", data);
+                if (data.success) {
+                    insertEventTableRow(eventModel);
+                    eventModel = { eventDate: "--:--", title: "" };
+                    
+                }
+            });
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+
 }
 jQuery('#datetimepicker').datetimepicker({
     format: 'd.m.Y H:i',

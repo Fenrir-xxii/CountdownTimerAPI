@@ -19,16 +19,23 @@
 }
 
 .carousel {
-  border: 8px solid rgb(212, 212, 212);
+  border: 2px solid rgb(212, 212, 212);
   border-radius: 8px;
 }
 
 .carousel-inner, .carousel, .carousel-item, .carousel-container {
   height: 100%;
   width: 100%;
+/*  max-width: 143px;*/
   background-position: center center;
   background-size: cover;
 }
+/*.carousel-item {
+    display: flex;
+    flex-direction: column;*/
+    /*flex-wrap: nowrap;*/
+    /*justify-content: center;
+}*/
 
 .carousel-item-prev:not(.carousel-item-end), .active.carousel-item-start {
   transform: translate3d(0, -100%, 0);
@@ -72,7 +79,7 @@
   width: 2rem;
   height: 2rem;
   position: fixed;
-  top: 72%;
+  top: 54%;
   left: 7.5%;
   transform: translate(-50%, -50%) rotate(90deg);
   z-index: -1;

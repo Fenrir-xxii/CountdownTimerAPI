@@ -54,7 +54,7 @@
 }
 
 .carousel-indicators {
-  top: 0;
+  top: -30px;
   margin: auto;
   height: 20px;
   right: 10px;
@@ -66,8 +66,8 @@
   background: none;
   border: 2px solid rgb(212, 212, 212);
   border-radius: 12px;
-  width: 12px;
-  height: 12px;
+  width: 7px;
+  height: 7px;
   margin-bottom: 5px;
 }
 

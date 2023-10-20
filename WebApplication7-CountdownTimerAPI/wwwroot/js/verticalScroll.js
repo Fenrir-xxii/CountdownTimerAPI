@@ -1,12 +1,12 @@
-$(document).ready(function () {
-    var infoToast = document.getElementById('infoToast');
-    infoToast.addEventListener('hidden.bs.toast', function () {
-        //roll-in-blurred-right
-        $("#gitBtn").addClass("jello-horizontal");
-    });
-    var toast = new bootstrap.Toast(infoToast);
-    toast.show();
-});
+//$(document).ready(function () {
+//    var infoToast = document.getElementById('infoToast');
+//    infoToast.addEventListener('hidden.bs.toast', function () {
+//        //roll-in-blurred-right
+//        $("#gitBtn").addClass("jello-horizontal");
+//    });
+//    var toast = new bootstrap.Toast(infoToast);
+//    toast.show();
+//});
 
 $('#vertical-carousel').bind('mousewheel DOMMouseScroll', function (e) {
     if (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0) {

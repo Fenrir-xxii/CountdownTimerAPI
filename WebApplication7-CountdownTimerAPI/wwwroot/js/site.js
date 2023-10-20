@@ -45,7 +45,10 @@ function getCalendarEventsItems() {
         headers: { Authorization: `Bearer ${token}` }
     })
         .then(response => response.json())
-        .then(data => _displayCalendarEventsItems(data))
+        .then(data => {
+            _displayCalendarEventsItems(data);
+            _displayCalendarEventsCards(data);
+        })
         .catch(error => console.error('Unable to get events items.', error));
 }
 function _displayRecordItems(data) {
@@ -56,7 +59,7 @@ function _displayRecordItems(data) {
         insertTableRow(item);
     });
     console.log("display record data", data);
-    eventList = data;
+    countdownList = data;
 }
 function _displayFavoriteItems(data) {
     const ul = document.getElementById('fav-list');
@@ -75,7 +78,17 @@ function _displayCalendarEventsItems(data) {
         insertEventTableRow(item);
     });
     console.log("display event data", data);
-    countdownList = data;
+    eventList = data;
+}
+function _displayCalendarEventsCards(data) {
+    $('.carousel-inner').html('');
+
+    data.forEach(item => {
+        displayEventCard(item);
+    });
+    console.log("display event data", data);
+    eventList = data;
+    displayCarouselIndicators();
 }
 function insertTableRow(record) {
     let row = table.insertRow();
@@ -101,6 +114,46 @@ function insertEventTableRow(record) {
     eventDate.innerHTML = evDate.toLocaleDateString('uk-UA');
     let daysToCome = row.insertCell(2);
     daysToCome.innerHTML = getDaysToEvent(record.eventDate); 
+}
+function displayEventCard(item) {
+    let eventContainer = $('.carousel-inner');
+    let evDate = new Date(item.eventDate).toLocaleDateString('uk-UA');
+    let daysToGo = getDaysToEvent(item.eventDate); 
+    let html = `<div class="carousel-item">
+                    <div class="card text-dark my-color mb-3 my-card text-center">
+                        <div class="card-header">${evDate}</div>
+                        <div class="card-body">
+                            <h5 class="card-title">${item.title}</h5>
+                        </div>
+                        <div class="card-footer">
+                            <p class="card-text">${daysToGo} days to go</p>
+                        </div>
+                    </div>
+                </div>`;
+    eventContainer.append(html);
+    setActiveSlide(); // set 1st slide active
+}
+function setActiveSlide() {
+    let firstCard = $('.carousel-inner').children().first();
+    console.log("activeSlide firstCard", firstCard);
+    if (firstCard.hasClass('active')) {
+        return;
+    } else {
+        firstCard.addClass('active');
+    }
+}
+function displayCarouselIndicators() {
+    let indicatorList = $('.carousel-indicators');
+    indicatorList.html('');
+    for (let [index] of eventList.entries()) {
+        let listItem = "";
+        if (index == 0) {
+            listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}" class="active"></li>`;
+        } else {
+            listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}"></li>`;
+        }
+        indicatorList.append(listItem);
+    }
 }
 function insertListItem(item) {
     const ul = document.getElementById('fav-list');
@@ -181,7 +234,6 @@ function insertListItem(item) {
     });
 }
 function getDaysToEvent(date) {
-    //TODO
     const today = new Date();
     const eventDay = new Date(date);
     const diffTime = Math.abs(eventDay - today);
@@ -326,27 +378,6 @@ $('#calendar-event-btn').on("click", function () {
                 saveCalendarEvent();
             }
         })
-
-        //fetch('api/timers/add-event', {
-        //    method: "post",
-        //    headers: new Headers({
-        //        'Authorization': `Bearer ${token}`,
-        //        'Content-Type': "application/json"
-        //    }),
-        //    mode: 'cors',
-        //    body: JSON.stringify({
-        //        Title: favModel.title,
-        //        EventDate: result.value
-        //    })
-        //})
-        //    .then(response => response.json())
-        //    .then(data => {
-        //        console.log("data", data);
-        //        if (data.success) {
-        //            //insertListItem(favModel);
-        //            //favModel = { time: "--:--", title: "" };
-        //        }
-        //    });
     })
 })
 $('#show-events-btn').on("click", function () {
@@ -451,6 +482,8 @@ function saveCalendarEvent() {
                 console.log("data", data);
                 if (data.success) {
                     insertEventTableRow(eventModel);
+                    displayEventCard(eventModel);
+                    displayCarouselIndicators();
                     eventModel = { eventDate: "--:--", title: "" };
                     
                 }

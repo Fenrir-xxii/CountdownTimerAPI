@@ -74,7 +74,7 @@ public class TimeHistoryController : ControllerBase
         {
             return new List<CalendarEvent>();
         }
-        return await _context.CalendarEvents.Where(x => x.User.Id == user.Id).ToListAsync();
+        return await _context.CalendarEvents.Where(x => x.User.Id == user.Id).OrderBy(x => x.EventDate).ToListAsync();
     }
 
     [HttpGet("records", Name = "GetTimerList")]

@@ -216,6 +216,63 @@ public class TimeHistoryController : ControllerBase
             Error = string.Empty
         });
     }
+    [HttpPost("edit-event/{id}")]
+    public async Task<IActionResult> EditCalendartEvent([FromBody] AddCalendarEventRequest request, int id)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "Bad request"
+            });
+        }
+        var user = await GetCurrentUser();
+        if (user == null)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "User not found"
+            });
+        }
+        var calendarEvent = _context.CalendarEvents.FirstOrDefault(x => x.Id == id);
+        if(calendarEvent == null)
+        {
+            return BadRequest(new AddCountdownResponse
+            {
+                Success = false,
+                Error = "Event not found"
+            });
+        }
+        calendarEvent.EventDate = DateTime.Parse(request.EventDate);
+        calendarEvent.Title = request.Title;
+
+        _context.SaveChanges();
+
+        return Ok(new AddCountdownResponse
+        {
+            Success = true,
+            Error = string.Empty
+        });
+    }
+    [HttpGet("get-event/{id}", Name = "GetEvent")]
+    public async Task<CalendarEvent> GetCalendarEvent(int id)
+    {
+        return await _context.CalendarEvents.FirstOrDefaultAsync(x => x.Id == id);
+    }
+    [HttpPost("del-event/{id}")]
+    public async Task<IActionResult> DeleteCalendarEvent(int id)
+    {
+        var calendarEvent = await _context.CalendarEvents.FirstOrDefaultAsync(x => x.Id == id);
+        if (calendarEvent == null)
+        {
+            return Ok(new { Success = false });
+        }
+        _context.Remove(calendarEvent);
+        _context.SaveChanges();
+        return Ok(new { Success = true });
+    }
     //[HttpGet("authcheck", Name = "GetTokenCheck")]
     //public async Task<object> GetTokenCheck()
     //{

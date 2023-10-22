@@ -19,6 +19,15 @@ var eventModel = { eventDate: "--:--", title: "" };
 const table = document.getElementById('record-table-body');
 const eventTable = document.getElementById('events-table-body');
 
+var splide = new Splide('.splide', {
+    direction: 'ttb',
+    height: '18rem',
+    autoplay: true,
+    type: 'loop',
+    interval: 3000,
+    pauseOnHover: true,
+});
+
 checkAuth();
 getRecordItems();
 getFavoriteItems();
@@ -85,10 +94,13 @@ function _displayCalendarEventsCards(data) {
 
     data.forEach(item => {
         displayEventCard(item);
+        displayEventCardSplide(item);
     });
     console.log("display event data", data);
     eventList = data;
     displayCarouselIndicators();
+
+    splide.mount();
 }
 function insertTableRow(record) {
     let row = table.insertRow();
@@ -133,6 +145,239 @@ function displayEventCard(item) {
     eventContainer.append(html);
     setActiveSlide(); // set 1st slide active
 }
+function displayEventCardSplide(item) {
+    let eventContainer = $('#splide-list');
+    let evDate = new Date(item.eventDate).toLocaleDateString('uk-UA');
+    let daysToGo = getDaysToEvent(item.eventDate);
+    let html = `<li class="splide__slide">
+                    <div class="card text-dark my-color mb-3 my-card text-center">
+                        <div class="card-header">${evDate}</div>
+                        <div class="card-body">
+                            <h5 class="card-title">${item.title}</h5>
+                        </div>
+                        <div class="card-footer">
+                            <button class="edit-event-btn" data-id="${item.id}">
+                                <img src="/svg/edit.svg" alt="edit" />
+                            </button>
+                            <button class="delete-event-btn" data-id="${item.id}">
+                                <img src="/svg/delete.svg" alt="delete" />
+                            </button>
+                        </div>
+                        <div class="card-footer date-footer">
+                            <p class="card-text">${daysToGo} days to go</p>
+                        </div>
+                    </div>
+                </li>`;
+    eventContainer.append(html);
+}
+//$('.edit-event-btn').on('click', function (event) {
+//    console.log("EDIT");
+//    event.stopPropagation();
+//    event.stopImmediatePropagation();
+//    Swal.fire("test");
+//})
+$(document).on('click', '.edit-event-btn', function (event) {
+    let id = event.target.getAttribute("data-id");
+    if (id == undefined) {
+        id = ($(event.target)).parent().attr("data-id");
+    }
+
+    // 1. Get event from db
+    let oldTitle = "";
+    let oldDate = "";
+    
+    fetch(`api/timers/get-event/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+        .then(response => response.json())
+        .then(data => {
+            oldTitle = data.title;
+            evDate = data.eventDate;
+            let dt = new Date(evDate);
+            console.log("evDate", evDate);
+            console.log("dt", dt);
+            let stringDate = dt.getFullYear() + '-' + (dt.getMonth() + 1) + '-' + dt.getDate();
+            console.log("stringDate", stringDate); 
+            oldDate = new Date(stringDate);
+            console.log("oldDate", oldDate);
+            console.log("oldDate in calendar", new Date(oldDate).toISOString());
+        })
+
+    console.log("EDIT id=", id);
+    //TODO: Fix editing/deleting newly created items (without id) 
+
+    // 2. Ask user to make changes
+    Swal.fire({
+        title: 'Do you want to make changes?',
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Title',
+        denyButtonText: 'Date',
+        customClass: {
+            actions: 'my-actions',
+            cancelButton: 'order-1 right-gap',
+            confirmButton: 'order-2',
+            denyButton: 'order-3',
+        }
+    }).then((result) => {
+        if (result.isConfirmed) { // title
+            Swal.fire({
+                title: "Title",
+                input: 'text',
+                inputValue: oldTitle,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Save',
+                confirmButtonColor: '#3c4cc8'
+            }).then((result) =>{
+                console.log("new event title: ", result.value);
+                //2.1 save new title
+                fetch(`api/timers/edit-event/${id}`, {
+                    method: "post",
+                    headers: new Headers({
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': "application/json"
+                    }),
+                    mode: 'cors',
+                    body: JSON.stringify({
+                        Title: result.value,
+                        EventDate: oldDate
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Edit title data", data);
+                        if (data.success) {
+                            console.log("Edit title => Success");
+                            // change html (title)
+
+                            //let cardTitle = $(event.target).closest("div").siblings('h5');
+                            //console.log("event.target", $(event.target));
+                            //console.log("cardTitle", cardTitle);
+                            //$(event.target).closest("div").siblings('h5').html(result.value);
+                            //console.log("closest", $(event.target).closest(".card-footer").siblings(".card-body").find('h5'));
+                            $(event.target).closest(".card-footer").siblings(".card-body").find('h5').html(result.value);
+                            splide.refresh();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Something went wrong!',
+                            })
+                        }
+                    })
+
+
+            })
+        } else if (result.isDenied) { // date
+            Swal.fire({
+                title: 'Please enter new event date',
+                input: 'text',
+                inputValue: new Date(oldDate).toISOString(),
+                stopKeydownPropagation: false,
+                preConfirm: () => {
+                    if (datepicker.getDate() < new Date(new Date().setHours(0, 0, 0, 0))) {
+                        Swal.showValidationMessage(`The event date can't be in the past`);
+                    }
+                    return datepicker.getDate()
+                },
+                didOpen: () => {
+                    datepicker = new Pikaday({ field: Swal.getInput() });
+                    setTimeout(() => datepicker.show(), 400); // show calendar after showing animation
+                },
+                didClose: () => {
+                    datepicker.destroy();
+                },
+            }).then((result) => {
+                console.log("new event date: ", result.value);
+                //2.2 save new date
+                fetch(`api/timers/edit-event/${id}`, {
+                    method: "post",
+                    headers: new Headers({
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': "application/json"
+                    }),
+                    mode: 'cors',
+                    body: JSON.stringify({
+                        Title: oldTitle,
+                        EventDate: result.value
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Edit date data", data);
+                        if (data.success) {
+                            console.log("Edit date => Success");
+                            // change html (date)
+                            let shortDate = new Date(result.value).toLocaleDateString('uk-UA');
+                            $(event.target).closest(".card-body").siblings(".card-header").html(shortDate);
+                            // change html (days to go)
+                            let daysToGo = getDaysToEvent(result.value);
+                            $(event.target).closest(".card-footer").siblings(".date-footer").find("p").html(`${daysToGo} days to go`);
+                            splide.refresh();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Something went wrong!',
+                            })
+                        }
+                    })
+
+            })
+        }
+    })
+
+
+});
+$(document).on('click', '.delete-event-btn', function (event) {
+    let id = event.target.getAttribute("data-id");
+    Swal.fire({
+        title: 'Do you really want to delete event?',
+        showDenyButton: true,
+        showCancelButton: false,
+        confirmButtonText: 'Delete',
+        denyButtonText: `Keep`,
+    }).then((result) => {
+        
+        if (result.isConfirmed) {
+            fetch(`api/timers/del-event/${id}`, {
+                method: "post",
+                headers: new Headers({
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': "application/json"
+                }),
+                mode: 'cors'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        $("#splide-list").empty();
+                        splide.destroy('completely');
+                        splide = null;
+                        splide = new Splide('.splide', {
+                            direction: 'ttb',
+                            height: '14rem',
+                            autoplay: true,
+                            type: 'loop',
+                            interval: 3000,
+                            pauseOnHover: true,
+                        });
+                        getCalendarEventsItems();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Something went wrong!',
+                        })
+                    }
+                })
+        }
+    })
+})
+
+
+
 function setActiveSlide() {
     let firstCard = $('.carousel-inner').children().first();
     console.log("activeSlide firstCard", firstCard);
@@ -146,13 +391,24 @@ function displayCarouselIndicators() {
     let indicatorList = $('.carousel-indicators');
     indicatorList.html('');
     for (let [index] of eventList.entries()) {
-        let listItem = "";
-        if (index == 0) {
-            listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}" class="active"></li>`;
-        } else {
-            listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}"></li>`;
-        }
+        let listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}"></li>`;
+        //if (index == 0) {
+        //    listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}" class="active"></li>`;
+        //} else {
+        //    listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}"></li>`;
+        //}
         indicatorList.append(listItem);
+        
+    }
+    setActiveIndicator();
+}
+function setActiveIndicator() {
+    let firstIndicator = $('.carousel-indicators').children().first();
+    console.log("activeSlide indicator", firstIndicator);
+    if (firstIndicator.hasClass('active')) {
+        return;
+    } else {
+        firstIndicator.addClass('active');
     }
 }
 function insertListItem(item) {
@@ -484,6 +740,8 @@ function saveCalendarEvent() {
                     insertEventTableRow(eventModel);
                     displayEventCard(eventModel);
                     displayCarouselIndicators();
+                    displayEventCardSplide(eventModel);
+                    splide.refresh();
                     eventModel = { eventDate: "--:--", title: "" };
                     
                 }

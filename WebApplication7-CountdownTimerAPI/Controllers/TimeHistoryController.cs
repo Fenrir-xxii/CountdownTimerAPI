@@ -99,7 +99,7 @@ public class TimeHistoryController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "Bad request"
@@ -108,7 +108,7 @@ public class TimeHistoryController : ControllerBase
         var user = await GetCurrentUser();
         if(user == null)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "User not found"
@@ -126,7 +126,7 @@ public class TimeHistoryController : ControllerBase
         _context.Add(countdown);
         _context.SaveChanges();
 
-        return Ok(new AddCountdownResponse
+        return Ok(new TimerResponse
         {
             Success = true,
             Error = string.Empty
@@ -137,7 +137,7 @@ public class TimeHistoryController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "Bad request"
@@ -146,7 +146,7 @@ public class TimeHistoryController : ControllerBase
         var user = await GetCurrentUser();
         if (user == null)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "User not found"
@@ -162,7 +162,7 @@ public class TimeHistoryController : ControllerBase
         _context.Add(favorite);
         _context.SaveChanges();
 
-        return Ok(new AddCountdownResponse
+        return Ok(new TimerResponse
         {
             Success = true,
             Error = string.Empty
@@ -185,7 +185,7 @@ public class TimeHistoryController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "Bad request"
@@ -194,7 +194,7 @@ public class TimeHistoryController : ControllerBase
         var user = await GetCurrentUser();
         if (user == null)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "User not found"
@@ -210,10 +210,11 @@ public class TimeHistoryController : ControllerBase
         _context.Add(calendarEvent);
         _context.SaveChanges();
 
-        return Ok(new AddCountdownResponse
+        return Ok(new TimerResponse
         {
             Success = true,
-            Error = string.Empty
+            Error = string.Empty,
+            Id = calendarEvent.Id
         });
     }
     [HttpPost("edit-event/{id}")]
@@ -221,7 +222,7 @@ public class TimeHistoryController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "Bad request"
@@ -230,7 +231,7 @@ public class TimeHistoryController : ControllerBase
         var user = await GetCurrentUser();
         if (user == null)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "User not found"
@@ -239,7 +240,7 @@ public class TimeHistoryController : ControllerBase
         var calendarEvent = _context.CalendarEvents.FirstOrDefault(x => x.Id == id);
         if(calendarEvent == null)
         {
-            return BadRequest(new AddCountdownResponse
+            return BadRequest(new TimerResponse
             {
                 Success = false,
                 Error = "Event not found"
@@ -250,7 +251,7 @@ public class TimeHistoryController : ControllerBase
 
         _context.SaveChanges();
 
-        return Ok(new AddCountdownResponse
+        return Ok(new TimerResponse
         {
             Success = true,
             Error = string.Empty

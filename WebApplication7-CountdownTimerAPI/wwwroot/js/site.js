@@ -15,7 +15,7 @@ let selectedDateTime;
 
 var countdownModel = { startTime: "--:--", endTime: "--:--", durationPlanned: "0s", durationPerformed: "0s" };
 var favModel = { time: "--:--", title: "" };
-var eventModel = { eventDate: "--:--", title: "" };
+var eventModel = {  id:-1, eventDate: "--:--", title: "" };
 const table = document.getElementById('record-table-body');
 const eventTable = document.getElementById('events-table-body');
 
@@ -170,12 +170,6 @@ function displayEventCardSplide(item) {
                 </li>`;
     eventContainer.append(html);
 }
-//$('.edit-event-btn').on('click', function (event) {
-//    console.log("EDIT");
-//    event.stopPropagation();
-//    event.stopImmediatePropagation();
-//    Swal.fire("test");
-//})
 $(document).on('click', '.edit-event-btn', function (event) {
     let id = event.target.getAttribute("data-id");
     if (id == undefined) {
@@ -204,7 +198,6 @@ $(document).on('click', '.edit-event-btn', function (event) {
         })
 
     console.log("EDIT id=", id);
-    //TODO: Fix editing/deleting newly created items (without id) 
 
     // 2. Ask user to make changes
     Swal.fire({
@@ -392,13 +385,7 @@ function displayCarouselIndicators() {
     indicatorList.html('');
     for (let [index] of eventList.entries()) {
         let listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}"></li>`;
-        //if (index == 0) {
-        //    listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}" class="active"></li>`;
-        //} else {
-        //    listItem = `<li data-bs-target="#vertical-carousel" data-bs-slide-to="${index}"></li>`;
-        //}
-        indicatorList.append(listItem);
-        
+        indicatorList.append(listItem); 
     }
     setActiveIndicator();
 }
@@ -483,10 +470,7 @@ function insertListItem(item) {
                         }
                     })
             }
-        })
-
-
-        
+        }) 
     });
 }
 function getDaysToEvent(date) {
@@ -737,12 +721,13 @@ function saveCalendarEvent() {
             .then(data => {
                 console.log("data", data);
                 if (data.success) {
+                    eventModel.id = data.id;
                     insertEventTableRow(eventModel);
                     displayEventCard(eventModel);
                     displayCarouselIndicators();
                     displayEventCardSplide(eventModel);
                     splide.refresh();
-                    eventModel = { eventDate: "--:--", title: "" };
+                    eventModel = { id: -1, eventDate: "--:--", title: "" };
                     
                 }
             });

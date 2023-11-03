@@ -26,7 +26,9 @@ var splide = new Splide('.splide', {
     type: 'loop',
     interval: 3000,
     pauseOnHover: true,
+    updateOnMove: true
 });
+splide.mount();
 
 checkAuth();
 getRecordItems();
@@ -100,7 +102,7 @@ function _displayCalendarEventsCards(data) {
     eventList = data;
     displayCarouselIndicators();
 
-    splide.mount();
+    //splide.mount();
 }
 function insertTableRow(record) {
     let row = table.insertRow();
@@ -168,12 +170,15 @@ function displayEventCardSplide(item) {
                         </div>
                     </div>
                 </li>`;
-    eventContainer.append(html);
+    //eventContainer.append(html);
+    splide.add(html);
 }
 $(document).on('click', '.edit-event-btn', function (event) {
     let id = event.target.getAttribute("data-id");
+    console.log("event id", id);
     if (id == undefined) {
         id = ($(event.target)).parent().attr("data-id");
+        console.log("event id if", id);
     }
 
     // 1. Get event from db
@@ -190,7 +195,7 @@ $(document).on('click', '.edit-event-btn', function (event) {
             let dt = new Date(evDate);
             console.log("evDate", evDate);
             console.log("dt", dt);
-            let stringDate = dt.getFullYear() + '-' + (dt.getMonth() + 1) + '-' + dt.getDate();
+            let stringDate = dt.getFullYear() + '-' + ('0' + (dt.getMonth() + 1)).slice(-2) + '-' + ('0' + dt.getDate()).slice(-2) + 'T00:00:00.000Z';
             console.log("stringDate", stringDate); 
             oldDate = new Date(stringDate);
             console.log("oldDate", oldDate);
@@ -251,6 +256,8 @@ $(document).on('click', '.edit-event-btn', function (event) {
                             //console.log("closest", $(event.target).closest(".card-footer").siblings(".card-body").find('h5'));
                             $(event.target).closest(".card-footer").siblings(".card-body").find('h5').html(result.value);
                             splide.refresh();
+                            //splide.go(1);
+                            //resetSplide();
                         } else {
                             Swal.fire({
                                 icon: 'error',
@@ -267,6 +274,7 @@ $(document).on('click', '.edit-event-btn', function (event) {
                 title: 'Please enter new event date',
                 input: 'text',
                 inputValue: new Date(oldDate).toISOString(),
+                //inputValue: new Date(oldDate).toString(),
                 stopKeydownPropagation: false,
                 preConfirm: () => {
                     if (datepicker.getDate() < new Date(new Date().setHours(0, 0, 0, 0))) {
@@ -303,11 +311,13 @@ $(document).on('click', '.edit-event-btn', function (event) {
                             console.log("Edit date => Success");
                             // change html (date)
                             let shortDate = new Date(result.value).toLocaleDateString('uk-UA');
-                            $(event.target).closest(".card-body").siblings(".card-header").html(shortDate);
+                            $(event.target).closest(".card-footer").siblings(".card-header").html(shortDate);
                             // change html (days to go)
                             let daysToGo = getDaysToEvent(result.value);
                             $(event.target).closest(".card-footer").siblings(".date-footer").find("p").html(`${daysToGo} days to go`);
                             splide.refresh();
+                            //resetSplide();
+                            //splide.go(1);
                         } else {
                             Swal.fire({
                                 icon: 'error',
@@ -325,6 +335,11 @@ $(document).on('click', '.edit-event-btn', function (event) {
 });
 $(document).on('click', '.delete-event-btn', function (event) {
     let id = event.target.getAttribute("data-id");
+    console.log("event id", id);
+    if (id == undefined) {
+        id = ($(event.target)).parent().attr("data-id");
+        console.log("event id if", id);
+    }
     Swal.fire({
         title: 'Do you really want to delete event?',
         showDenyButton: true,
@@ -345,17 +360,19 @@ $(document).on('click', '.delete-event-btn', function (event) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        $("#splide-list").empty();
-                        splide.destroy('completely');
-                        splide = null;
-                        splide = new Splide('.splide', {
-                            direction: 'ttb',
-                            height: '14rem',
-                            autoplay: true,
-                            type: 'loop',
-                            interval: 3000,
-                            pauseOnHover: true,
-                        });
+                        //$("#splide-list").empty();
+                        //splide.destroy('completely');
+                        //splide = null;
+                        //splide = new Splide('.splide', {
+                        //    direction: 'ttb',
+                        //    height: '14rem',
+                        //    autoplay: true,
+                        //    type: 'loop',
+                        //    interval: 3000,
+                        //    pauseOnHover: true,
+                        //    updateOnMove: true
+                        //});
+                        resetSplide();
                         getCalendarEventsItems();
                     } else {
                         Swal.fire({
@@ -476,6 +493,8 @@ function insertListItem(item) {
 function getDaysToEvent(date) {
     const today = new Date();
     const eventDay = new Date(date);
+    today.setHours(0, 0, 0, 0);
+    eventDay.setHours(0, 0, 0, 0);
     const diffTime = Math.abs(eventDay - today);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     console.log(diffTime + " milliseconds");
@@ -765,6 +784,21 @@ $('#history-btn').on("click", function () {
         history.hide();
     }
 });
+function resetSplide() {
+    $("#splide-list").empty();
+    splide.destroy('completely');
+    splide = null;
+    splide = new Splide('.splide', {
+        direction: 'ttb',
+        height: '14rem',
+        autoplay: true,
+        type: 'loop',
+        interval: 3000,
+        pauseOnHover: true,
+        updateOnMove: true
+    });
+    splide.mount();
+}
 function setDateTime(time) {
     let dateTime = moment(time, "HH:mm");
     let dateNow = moment();
